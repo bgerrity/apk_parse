@@ -27,7 +27,7 @@ from struct import pack, unpack
 from xml.sax.saxutils import escape
 from zlib import crc32
 import re
-import M2Crypto
+#import M2Crypto
 
 from xml.dom import minidom
 
@@ -212,23 +212,23 @@ class APK(object):
 
                     self.valid_apk = True
 
-            re_cert = re.compile(r'meta-inf(/|\\).*\.(rsa|dsa)')
-            if re_cert.match(i.lower()):
-                self.parse_cert(i)
+            # re_cert = re.compile(r'meta-inf(/|\\).*\.(rsa|dsa)')
+            # if re_cert.match(i.lower()):
+            #     self.parse_cert(i)
 
         self.get_files_types()
 
-    def parse_cert(self, cert_fname):
-        """
-            parse the cert text and md5
-        :param cert_fname:
-        """
-        input_bio = M2Crypto.BIO.MemoryBuffer(self.zip.read(cert_fname))
-        p7 = M2Crypto.SMIME.PKCS7(M2Crypto.m2.pkcs7_read_bio_der(input_bio._ptr()), 1)
-        sk3 = p7.get0_signers(M2Crypto.X509.X509_Stack())
-        cert = sk3.pop()
-        self.cert_text = cert.as_text()
-        self.cert_md5 = get_md5(cert.as_der())
+    # def parse_cert(self, cert_fname):
+    #     """
+    #         parse the cert text and md5
+    #     :param cert_fname:
+    #     """
+    #     input_bio = M2Crypto.BIO.MemoryBuffer(self.zip.read(cert_fname))
+    #     p7 = M2Crypto.SMIME.PKCS7(M2Crypto.m2.pkcs7_read_bio_der(input_bio._ptr()), 1)
+    #     sk3 = p7.get0_signers(M2Crypto.X509.X509_Stack())
+    #     cert = sk3.pop()
+    #     self.cert_text = cert.as_text()
+    #     self.cert_md5 = get_md5(cert.as_der())
 
     def is_valid_APK(self):
         """
@@ -449,7 +449,22 @@ class APK(object):
                     if val == "android.intent.category.LAUNCHER":
                         y.add(item.getAttributeNS(NS_ANDROID_URI, "name"))
 
+            if len(x) == 0:
+                for item in self.xml[i].getElementsByTagName("activity-alias"):
+                    for sitem in item.getElementsByTagName("action"):
+                        val = sitem.getAttributeNS(NS_ANDROID_URI, "name")
+                        if val == "android.intent.action.MAIN":
+                            x.add(item.getAttributeNS(NS_ANDROID_URI, "name"))
+
+                    for sitem in item.getElementsByTagName("category"):
+                        val = sitem.getAttributeNS(NS_ANDROID_URI, "name")
+                        if val == "android.intent.category.LAUNCHER":
+                            y.add(item.getAttributeNS(NS_ANDROID_URI, "name"))
+
+
+
         z = x.intersection(y)
+
         if len(z) > 0:
             return self.format_value(z.pop())
         return None
